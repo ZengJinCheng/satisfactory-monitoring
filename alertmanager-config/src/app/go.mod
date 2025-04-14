@@ -1,3 +1,3 @@
-module github.com/featheredtoast/alertmanager-config
+module github.com/ZengJinCheng/alertmanager-config
 
 go 1.18

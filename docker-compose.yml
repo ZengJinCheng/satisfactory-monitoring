@@ -12,7 +12,7 @@ services:
       - "8082:8080"
   frmcompanion:
     build: ./frmcompanion
-    image: featheredtoast/ficsit-remote-monitoring-companion
+    image: ZengJinCheng/ficsit-remote-monitoring-companion
     restart: unless-stopped
     environment:
       - FRM_HOST=${FRM_HOST:-host.docker.internal}
@@ -33,7 +33,7 @@ services:
 
   frmcache:
     build: ./frmcache
-    image: featheredtoast/ficsit-remote-monitoring-cache
+    image: ZengJinCheng/ficsit-remote-monitoring-cache
     restart: unless-stopped
     #extra_hosts:
     #  - "my-server:192.168.1.100"
@@ -60,7 +60,7 @@ services:
 
   alertmanager-config:
     build: ./alertmanager-config
-    image: featheredtoast/ficsit-remote-monitoring-alertmanager-config
+    image: ZengJinCheng/ficsit-remote-monitoring-alertmanager-config
     volumes:
       - ./alertmanager:/etc/alertmanager
     environment:
