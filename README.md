@@ -129,7 +129,7 @@ Follow a [docker engine install guide](https://docs.docker.com/engine/install/).
 
 ### Setup environment
 
-Download the project files, either [cloned through git](https://github.com/featheredtoast/satisfactory-monitoring.git), or [Download the zip](https://github.com/featheredtoast/satisfactory-monitoring/archive/refs/heads/main.zip) and extract it.
+Download the project files, either [cloned through git](https://github.com/ZengJinCheng/satisfactory-monitoring.git), or [Download the zip](https://github.com/ZengJinCheng/satisfactory-monitoring/archive/refs/heads/main.zip) and extract it.
 
 #### Optional: Discord alerts
 
