@@ -185,19 +185,23 @@ func (c *CacheWorker) pullMetricsLog(metric string, route string, keepHistory bo
 func (c *CacheWorker) pullLowCadenceMetrics() {
 	c.pullMetricsLog("factory", "/getFactory", true)
 	c.pullMetricsLog("extractor", "/getExtractor", true)
-	c.pullMetricsLog("dropPod", "/getDropPod", false)
-	c.pullMetricsLog("storageInv", "/getStorageInv", false)
-	c.pullMetricsLog("worldInv", "/getWorldInv", false)
-	c.pullMetricsLog("droneStation", "/getDroneStation", false)
+	c.pullMetricsLog("dropPod", "/getDropPod", true)
+	c.pullMetricsLog("worldInv", "/getWorldInv", true)
+	c.pullMetricsLog("player", "/getPlayer", true)
+	c.pullMetricsLog("generators", "/getGenerators", true)
+	c.pullMetricsLog("resourceSink", "/getResourceSink", true)
+	c.pullMetricsLog("explorationSink", "/getExplorationSink", true)
+	c.pullMetricsLog("prodStats", "/getProdStats", true)
+	c.pullMetricsLog("power", "/getPower", true)
 }
 
 func (c *CacheWorker) pullRealtimeMetrics() {
+	c.pullMetricsLog("droneStation", "/getDroneStation", true)
 	c.pullMetricsLog("drone", "/getDrone", true)
 	c.pullMetricsLog("train", "/getTrains", true)
 	c.pullMetricsLog("truck", "/getVehicles", true)
 	c.pullMetricsLog("trainStation", "/getTrainStation", true)
 	c.pullMetricsLog("truckStation", "/getTruckStation", true)
-	c.pullMetricsLog("player", "/getPlayer", false)
 }
 
 func (c *CacheWorker) pullSessionName() {

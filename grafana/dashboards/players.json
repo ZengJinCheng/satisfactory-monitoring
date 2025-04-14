@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 8,
+  "id": 6,
   "links": [],
   "panels": [
     {
@@ -77,7 +77,7 @@
       "options": {
         "basemap": {
           "config": {
-            "url": "https://satisfactory-map.ZengJinCheng.com/map/{z}/{x}/{y}.png"
+            "url": "https://satisfactory-map.featheredtoast.com/map/{z}/{x}/{y}.png"
           },
           "name": "Layer 0",
           "type": "xyz"
@@ -453,8 +453,8 @@
     "list": [
       {
         "current": {
-          "text": "http://host.docker.internal:8080",
-          "value": "http://host.docker.internal:8080"
+          "text": "",
+          "value": ""
         },
         "datasource": {
           "type": "prometheus",
@@ -500,9 +500,7 @@
       {
         "current": {
           "text": "All",
-          "value": [
-            "$__all"
-          ]
+          "value": "$__all"
         },
         "datasource": {
           "type": "grafana-postgresql-datasource",
@@ -530,5 +528,5 @@
   "timezone": "browser",
   "title": "玩家",
   "uid": "bealrl6frj6rke",
-  "version": 6
+  "version": 1
 }

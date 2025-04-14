@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 6,
+  "id": 5,
   "links": [],
   "panels": [
     {
@@ -72,7 +72,7 @@
       "options": {
         "basemap": {
           "config": {
-            "url": "https://satisfactory-map.ZengJinCheng.com/map/{z}/{x}/{y}.png"
+            "url": "https://satisfactory-map.featheredtoast.com/map/{z}/{x}/{y}.png"
           },
           "name": "Layer 0",
           "type": "xyz"
@@ -349,8 +349,8 @@
     "list": [
       {
         "current": {
-          "text": "http://host.docker.internal:8080",
-          "value": "http://host.docker.internal:8080"
+          "text": "",
+          "value": ""
         },
         "datasource": {
           "type": "prometheus",
@@ -403,5 +403,5 @@
   "timezone": "",
   "title": "坠机点",
   "uid": "1USga2tVk",
-  "version": 7
+  "version": 1
 }

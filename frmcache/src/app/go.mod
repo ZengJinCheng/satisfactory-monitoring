@@ -1,4 +1,4 @@
-module github.com/ZengJinCheng/frmcache
+module github.com/featheredtoast/frmcache
 
 go 1.21
 

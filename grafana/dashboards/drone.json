@@ -73,7 +73,7 @@
       "options": {
         "basemap": {
           "config": {
-            "url": "https://satisfactory-map.ZengJinCheng.com/map/{z}/{x}/{y}.png"
+            "url": "https://satisfactory-map.featheredtoast.com/map/{z}/{x}/{y}.png"
           },
           "name": "Layer 0",
           "tooltip": false,

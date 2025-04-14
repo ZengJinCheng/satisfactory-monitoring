@@ -45,7 +45,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 7,
+  "id": 1,
   "links": [],
   "panels": [
     {
@@ -1236,7 +1236,7 @@
       "options": {
         "basemap": {
           "config": {
-            "url": "https://satisfactory-map.ZengJinCheng.com/map/{z}/{x}/{y}.png"
+            "url": "https://satisfactory-map.featheredtoast.com/map/{z}/{x}/{y}.png"
           },
           "name": "Layer 0",
           "type": "xyz"
@@ -1997,8 +1997,8 @@
     "list": [
       {
         "current": {
-          "text": "http://host.docker.internal:8080",
-          "value": "http://host.docker.internal:8080"
+          "text": "",
+          "value": ""
         },
         "datasource": {
           "type": "prometheus",
@@ -2043,8 +2043,8 @@
       },
       {
         "current": {
-          "text": "0",
-          "value": "0"
+          "text": "",
+          "value": ""
         },
         "datasource": {
           "type": "prometheus",
@@ -2075,5 +2075,5 @@
   "timezone": "",
   "title": "电力",
   "uid": "OFv4PopVz",
-  "version": 7
+  "version": 1
 }

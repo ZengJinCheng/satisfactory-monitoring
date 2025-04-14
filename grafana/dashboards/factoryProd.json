@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
+  "id": 9,
   "links": [],
   "panels": [
     {
@@ -314,7 +314,7 @@
       "options": {
         "basemap": {
           "config": {
-            "url": "https://satisfactory-map.ZengJinCheng.com/map/{z}/{x}/{y}.png"
+            "url": "https://satisfactory-map.featheredtoast.com/map/{z}/{x}/{y}.png"
           },
           "name": "Layer 0",
           "tooltip": true,
@@ -710,8 +710,8 @@
     "list": [
       {
         "current": {
-          "text": "http://host.docker.internal:8080",
-          "value": "http://host.docker.internal:8080"
+          "text": "",
+          "value": ""
         },
         "datasource": {
           "type": "prometheus",
@@ -836,5 +836,5 @@
   "timezone": "",
   "title": "范围内机器和产量统计",
   "uid": "pUvf_pt4k",
-  "version": 2
+  "version": 1
 }

@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
+  "id": 8,
   "links": [],
   "panels": [
     {
@@ -65,7 +65,7 @@
       "options": {
         "basemap": {
           "config": {
-            "url": "https://satisfactory-map.ZengJinCheng.com/map/{z}/{x}/{y}.png"
+            "url": "https://satisfactory-map.featheredtoast.com/map/{z}/{x}/{y}.png"
           },
           "name": "Layer 0",
           "type": "xyz"
@@ -178,8 +178,8 @@
     "list": [
       {
         "current": {
-          "text": "http://host.docker.internal:8080",
-          "value": "http://host.docker.internal:8080"
+          "text": "",
+          "value": ""
         },
         "datasource": {
           "type": "prometheus",
@@ -274,5 +274,5 @@
   "timezone": "browser",
   "title": "效率地图",
   "uid": "ae2ra224hhjwgf",
-  "version": 10
+  "version": 1
 }
