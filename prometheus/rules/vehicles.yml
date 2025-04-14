@@ -1,0 +1,10 @@
+groups:
+  - name: 车辆
+    rules:
+    - alert: 火车脱轨
+      expr: train_derailed > 0
+      labels:
+        category: 车辆
+      annotations:
+        summary: "一列火车脱轨了"
+        description: "火车 {{ $labels.name }} 脱轨了！"

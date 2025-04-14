@@ -1,0 +1,60 @@
+rule_files:
+  - ../rules/production.yml
+evaluation_interval: 1m
+tests:
+  # Consumption less than production
+  - interval: 1m
+    input_series:
+      - series: 'items_produced_per_min{item_name="Iron Plate",url="http://test:8080"}'
+        values: '1+1x10'
+      - series: 'items_consumed_per_min{item_name="Iron Plate",url="http://test:8080"}'
+        values: '1+2x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: Overconsuming
+        exp_alerts:
+          - exp_labels:
+              item_name: "Iron Plate"
+              category: production
+              url: http://test:8080
+            exp_annotations:
+              summary: "Overconsuming item"
+              description: Iron Plate consumption has overtaken production. Produce more Iron Plate so as to not run out
+  # no alert when production is = consumption
+  - interval: 1m
+    input_series:
+      - series: 'items_produced_per_min{item_name="Iron Plate",url="http://test:8080"}'
+        values: '1+1x10'
+      - series: 'items_consumed_per_min{item_name="Iron Plate",url="http://test:8080"}'
+        values: '1+1x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: Overconsuming
+        exp_alerts:
+
+# Production percent under 20
+  - interval: 1m
+    input_series:
+      - series: 'item_production_capacity_pc{item_name="Iron Plate",url="http://test:8080"}'
+        values: '0.6-0.05x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: Underproducing
+        exp_alerts:
+          - exp_labels:
+              item_name: "Iron Plate"
+              category: production
+              url: http://test:8080
+            exp_annotations:
+              summary: "Underproducing item"
+              description: Iron Plate production is low - under 20% production capacity. Check production sites?
+
+# No alerts for anything over 20%
+  - interval: 1m
+    input_series:
+      - series: 'item_production_capacity_pc{item_name="Iron Plate",url="http://test:8080"}'
+        values: '0.3+0x10'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: Underproducing
+        exp_alerts:

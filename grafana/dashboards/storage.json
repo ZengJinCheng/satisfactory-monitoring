@@ -1,0 +1,352 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 4,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "default": true,
+        "type": "grafana-postgresql-datasource",
+        "uid": "GhzMNppVk"
+      },
+      "description": "存储容器地图",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 29,
+        "w": 11,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "basemap": {
+          "config": {
+            "url": "https://satisfactory-map.featheredtoast.com/map/{z}/{x}/{y}.png"
+          },
+          "name": "Layer 0",
+          "type": "xyz"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": false,
+          "showDebug": false,
+          "showMeasure": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": false,
+              "style": {
+                "color": {
+                  "fixed": "dark-red"
+                },
+                "opacity": 0.8,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 8,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/satisfactory/location-point.svg",
+                  "mode": "fixed"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "Layer 1",
+            "tooltip": true,
+            "type": "markers"
+          }
+        ],
+        "tooltip": {
+          "mode": "details"
+        },
+        "view": {
+          "allLayers": true,
+          "id": "coords",
+          "lastOnly": false,
+          "lat": -0.045,
+          "layer": "Layer 1",
+          "lon": 0.044525,
+          "padding": 3,
+          "shared": false,
+          "zoom": 13.87
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "GhzMNppVk"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select t.name,\nt.inventory,\nt.x,\nt.y,\nt.z,\nt.longitude,\nt.latitude\nfrom (\nselect \ndata ->> 'Name' as name,\ndata -> 'Inventory' as inventory,\nitem ->> 'Name' as item,\n(data -> 'location' ->> 'x')::NUMERIC/100 as x,\n(data -> 'location' ->> 'y')::NUMERIC/100 as y,\n(data -> 'location' ->> 'z')::NUMERIC/100 as z,\n(((data -> 'location' ->> 'x')::NUMERIC + 375000) * 0.0000001015) as longitude,\n(((data -> 'location' ->> 'y')::NUMERIC + 375000) * -0.0000001172) as latitude\nfrom cache\ncross join jsonb_path_query(data, '$.Inventory[*]') as item where metric = 'storageInv'\nand item->>'Name' = some(array[$item]::text[])\nand url = '$server'\nand session_name = '$session'\n) as t\ngroup by \nt.name,\nt.inventory,\nt.x,\nt.y,\nt.z,\nt.longitude,\nt.latitude\n;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "地图",
+      "type": "geomap"
+    },
+    {
+      "datasource": {
+        "default": true,
+        "type": "grafana-postgresql-datasource",
+        "uid": "GhzMNppVk"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 29,
+        "w": 13,
+        "x": 11,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "GhzMNppVk"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH extractor AS (\n  SELECT\n    production ->> 'Name' AS NAME,\n    ROUND(\n      SUM(\n        CASE\n          WHEN production ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN\n            CASE\n              WHEN production ->> 'Name' = '水' THEN\n                (production ->> 'Amount') :: NUMERIC / 1000\n              ELSE\n                (production ->> 'Amount') :: NUMERIC\n            END\n          ELSE\n            0\n        END\n      ),\n      3\n    ) AS Amount\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS production\n  WHERE\n    metric = 'extractor'\n  GROUP BY\n    1\n),\nfactorypro AS (\n  SELECT\n    production ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN production ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (production ->> 'Amount') :: NUMERIC ELSE 0 END), 3) AS Amount\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS production\n  WHERE\n    metric = 'factory'\n    AND production ->> 'Name' != 'Unassigned'\n  GROUP BY\n    1\n),\nfactorycons AS (\n  SELECT\n    ingredients ->> 'Name' AS NAME,\n    ROUND(\n      SUM(\n        CASE\n          WHEN ingredients ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN\n            CASE\n              WHEN ingredients ->> 'Name' = '水' THEN\n                (ingredients ->> 'Amount') :: NUMERIC / 1000\n              ELSE\n                (ingredients ->> 'Amount') :: NUMERIC\n            END\n          ELSE\n            0\n        END\n      ),\n      3\n    ) AS Amount\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'ingredients') AS ingredients\n  WHERE\n    metric = 'factory'\n    AND ingredients ->> 'Name' != 'Unassigned'\n  GROUP BY\n    1\n),\nworldInv AS (\n  SELECT DATA\n    ->> 'Name' AS NAME,\n    CASE\n      WHEN DATA ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN\n        (DATA ->> 'Amount') :: NUMERIC\n      ELSE\n        0\n    END AS Amount\n  FROM\n    CACHE\n  WHERE\n    metric = 'worldInv'\n) SELECT COALESCE\n  (P.NAME, C.NAME, e.NAME, w.NAME) AS \"物品\",\n  COALESCE (P.Amount, 0) + COALESCE (C.Amount, 0) + COALESCE (e.Amount, 0) + COALESCE (w.Amount, 0) AS \"数量\"\nFROM\n  factorypro\n  P FULL OUTER JOIN factorycons C USING (NAME)\n  FULL OUTER JOIN extractor e USING (NAME)\n  FULL OUTER JOIN worldInv w USING (NAME)\nORDER BY\n  \"数量\" ASC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "库存",
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "refresh": "auto",
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "http://host.docker.internal:8080",
+          "value": "http://host.docker.internal:8080"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "definition": "label_values(url)",
+        "includeAll": false,
+        "label": "服务器",
+        "name": "server",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(url)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "TvT",
+          "value": "TvT"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "definition": "label_values({url=\"$server\"},session_name)",
+        "includeAll": false,
+        "label": "会话",
+        "name": "session",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values({url=\"$server\"},session_name)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "GhzMNppVk"
+        },
+        "definition": "select \ndata ->> 'Name' as name\nfrom cache where metric = 'worldInv'\nand url = '$server'\nand session_name = '$session';",
+        "description": "物品过滤器",
+        "includeAll": true,
+        "label": "物品",
+        "multi": true,
+        "name": "item",
+        "options": [],
+        "query": "select \ndata ->> 'Name' as name\nfrom cache where metric = 'worldInv'\nand url = '$server'\nand session_name = '$session';",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "库存",
+  "uid": "rMkN1op4z",
+  "version": 19
+}

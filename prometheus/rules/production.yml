@@ -1,0 +1,19 @@
+groups:
+  - name: 产品
+    rules:
+    - alert: 过度消耗
+      expr:  items_produced_per_min - items_consumed_per_min < 0
+      for: 1m
+      labels:
+        category: 产品
+      annotations:
+        summary: "过度消耗物品"
+        description: "{{ $labels.item_name }} 消耗已经超过生产。多生产一些 {{ $labels.item_name }} 以免用完"
+    - alert: 产量不足
+      expr: item_production_capacity_pc < 0.2
+      for: 1m
+      labels:
+        category: 产品
+      annotations:
+        summary: "物品产量不足"
+        description: "{{ $labels.item_name }} 生产量低，不到20%的生产能力。检查生产现场吗？"

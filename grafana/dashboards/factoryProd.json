@@ -1,0 +1,840 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 2,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "default": true,
+        "type": "grafana-postgresql-datasource",
+        "uid": "GhzMNppVk"
+      },
+      "description": "选定时间段内的当前平均生产和消费情况（生产为正，消费为负）",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 51,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 2,
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "GhzMNppVk"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH consumption AS (\n  SELECT\n    ingredient ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN ingredient ->> 'CurrentConsumed' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (ingredient ->> 'CurrentConsumed') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'ingredients') AS ingredient\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND ingredient ->> 'Name' IS NOT NULL\n    AND ingredient ->> 'Name' != 'Unassigned'\n    AND (DATA -> 'location' ->> 'x') :: NUMERIC BETWEEN ($xmin * 100)\n    AND ($xmax * 100)\n    AND (DATA -> 'location' ->> 'y') :: NUMERIC BETWEEN ($ymin * 100)\n    AND ($ymax * 100)\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n),\nproduction AS (\n  SELECT\n    ingredient ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN ingredient ->> 'CurrentProd' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (ingredient ->> 'CurrentProd') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS ingredient\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND ingredient ->> 'Name' IS NOT NULL\n    AND ingredient ->> 'Name' != 'Unassigned'\n    AND (DATA -> 'location' ->> 'x') :: NUMERIC BETWEEN ($xmin * 100)\n    AND ($xmax * 100)\n    AND (DATA -> 'location' ->> 'y') :: NUMERIC BETWEEN ($ymin * 100)\n    AND ($ymax * 100)\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n) SELECT COALESCE\n  (P.NAME, C.NAME) AS \"物品\",\n  ROUND(COALESCE (P.rate, 0) - COALESCE (C.rate, 0), 3) AS \"数量\"\nFROM\n  production\n  P FULL OUTER JOIN consumption C USING (NAME)\nORDER BY\n  \"数量\" ASC,\n  \"物品\"",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [
+                  {
+                    "name": "*",
+                    "type": "functionParameter"
+                  }
+                ],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          },
+          "table": "cache"
+        }
+      ],
+      "title": "当前实际生产量",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "default": true,
+        "type": "grafana-postgresql-datasource",
+        "uid": "GhzMNppVk"
+      },
+      "description": "最大理论生产量-最大理论消耗量",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 51,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "GhzMNppVk"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH consumption AS (\n  SELECT\n    ingredient ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN ingredient ->> 'MaxConsumed' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (ingredient ->> 'MaxConsumed') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'ingredients') AS ingredient\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND ingredient ->> 'Name' IS NOT NULL\n    AND ingredient ->> 'Name' != 'Unassigned'\n    AND (DATA -> 'location' ->> 'x') :: NUMERIC BETWEEN ($xmin * 100)\n    AND ($xmax * 100)\n    AND (DATA -> 'location' ->> 'y') :: NUMERIC BETWEEN ($ymin * 100)\n    AND ($ymax * 100)\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n),\nproduction AS (\n  SELECT\n    ingredient ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN ingredient ->> 'MaxProd' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (ingredient ->> 'MaxProd') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS ingredient\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND ingredient ->> 'Name' IS NOT NULL\n    AND ingredient ->> 'Name' != 'Unassigned'\n    AND (DATA -> 'location' ->> 'x') :: NUMERIC BETWEEN ($xmin * 100)\n    AND ($xmax * 100)\n    AND (DATA -> 'location' ->> 'y') :: NUMERIC BETWEEN ($ymin * 100)\n    AND ($ymax * 100)\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n) SELECT COALESCE\n  (P.NAME, C.NAME) AS \"物品\",\n  ROUND(COALESCE (P.rate, 0) - COALESCE (C.rate, 0), 3) AS \"数量\"\nFROM\n  production\n  P FULL OUTER JOIN consumption C USING (NAME)\nORDER BY\n  \"数量\" ASC,\n  \"物品\"",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [
+                  {
+                    "name": "*",
+                    "type": "functionParameter"
+                  }
+                ],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          },
+          "table": "cache"
+        }
+      ],
+      "title": "理论最大产量",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 51
+      },
+      "id": 9,
+      "panels": [],
+      "title": "信息",
+      "type": "row"
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 52
+      },
+      "id": 11,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "按地区计算工厂产量\n\n通过一个由变量界定的正方形区域，计算输入和输出。\n\n编辑显示的地图并检查建筑物，以获取大约的x + y坐标。然后输入x和y的边界值。工厂的出口（+/-分钟）和进口（-/-分钟）将根据新的区域进行更新。\n\nx最小值，x最大值，y最小值和y最大值是游戏内的坐标。",
+        "mode": "markdown"
+      },
+      "pluginVersion": "11.6.0",
+      "title": "按地区计算的工厂产量计算器",
+      "type": "text"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 59
+      },
+      "id": 7,
+      "panels": [],
+      "title": "工厂详情",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "default": true,
+        "type": "grafana-postgresql-datasource",
+        "uid": "GhzMNppVk"
+      },
+      "description": "工厂的近似地图——用于绘制工厂边界",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 12,
+        "x": 0,
+        "y": 60
+      },
+      "id": 5,
+      "options": {
+        "basemap": {
+          "config": {
+            "url": "https://satisfactory-map.featheredtoast.com/map/{z}/{x}/{y}.png"
+          },
+          "name": "Layer 0",
+          "tooltip": true,
+          "type": "xyz"
+        },
+        "controls": {
+          "mouseWheelZoom": true,
+          "showAttribution": false,
+          "showDebug": false,
+          "showMeasure": false,
+          "showScale": false,
+          "showZoom": true
+        },
+        "layers": [
+          {
+            "config": {
+              "showLegend": false,
+              "style": {
+                "color": {
+                  "fixed": "dark-blue"
+                },
+                "opacity": 0.8,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "filterData": {
+              "id": "byRefId",
+              "options": "Other Buildings"
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "其它",
+            "tooltip": true,
+            "type": "markers"
+          },
+          {
+            "config": {
+              "showLegend": true,
+              "style": {
+                "color": {
+                  "fixed": "dark-orange"
+                },
+                "opacity": 0.7,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "filterData": {
+              "id": "byRefId",
+              "options": "Targeted Buildings"
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "选中",
+            "tooltip": true,
+            "type": "markers"
+          },
+          {
+            "config": {
+              "style": {
+                "color": {
+                  "fixed": "#FF9830"
+                },
+                "lineWidth": 2,
+                "opacity": 1,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "filterData": {
+              "id": "byRefId",
+              "options": "Selected Area"
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "边界",
+            "tooltip": true,
+            "type": "route"
+          },
+          {
+            "config": {
+              "showLegend": false,
+              "style": {
+                "color": {
+                  "fixed": "transparent"
+                },
+                "opacity": 0,
+                "rotation": {
+                  "fixed": 0,
+                  "max": 360,
+                  "min": -360,
+                  "mode": "mod"
+                },
+                "size": {
+                  "fixed": 5,
+                  "max": 15,
+                  "min": 2
+                },
+                "symbol": {
+                  "fixed": "img/icons/marker/circle.svg",
+                  "mode": "fixed"
+                },
+                "symbolAlign": {
+                  "horizontal": "center",
+                  "vertical": "center"
+                },
+                "textConfig": {
+                  "fontSize": 12,
+                  "offsetX": 0,
+                  "offsetY": 0,
+                  "textAlign": "center",
+                  "textBaseline": "middle"
+                }
+              }
+            },
+            "filterData": {
+              "id": "byRefId",
+              "options": "Selected Area"
+            },
+            "location": {
+              "mode": "auto"
+            },
+            "name": "边界视图",
+            "tooltip": false,
+            "type": "markers"
+          }
+        ],
+        "tooltip": {
+          "mode": "details"
+        },
+        "view": {
+          "allLayers": false,
+          "id": "fit",
+          "lastOnly": false,
+          "lat": -0.045,
+          "layer": "边界视图",
+          "lon": 0.045,
+          "zoom": 15
+        }
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "GhzMNppVk"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "hide": false,
+          "rawQuery": true,
+          "rawSql": "SELECT\ndata ->> 'Recipe' as \"配方\",\ndata ->> 'Name' as \"建筑\",\ndata as \"数据\",\n(data -> 'location' ->> 'x')::NUMERIC/100 as \"x坐标\",\n(data -> 'location' ->> 'y')::NUMERIC/100 as \"y坐标\",\n(data -> 'location' ->> 'z')::NUMERIC/100 as \"z坐标\",\n(((data -> 'location' ->> 'x')::NUMERIC + 375000) * 0.0000001015) as longitude,\n(((data -> 'location' ->> 'y')::NUMERIC + 375000) * -0.0000001172) as latitude\nFROM cache\nwhere metric in ('factory', 'extractor')\nand (data -> 'location' ->> 'x')::NUMERIC/100 >= $xmin\nand (data -> 'location' ->> 'x')::NUMERIC/100 <= $xmax \nand (data -> 'location' ->> 'y')::NUMERIC/100 >= $ymin\nand (data -> 'location' ->> 'y')::NUMERIC/100 <= $ymax\nand url = '$server'\nand session_name = '$session'",
+          "refId": "Targeted Buildings",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          },
+          "table": "cache"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "GhzMNppVk"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "hide": false,
+          "rawQuery": true,
+          "rawSql": "SELECT\n  data ->> 'Recipe' as \"配方\",\n  data ->> 'building' as \"建筑\",\n  (data -> 'location' ->> 'x') :: NUMERIC / 100 as \"x坐标\",\n  (data -> 'location' ->> 'y') :: NUMERIC / 100 as \"y坐标\",\n  (data -> 'location' ->> 'z') :: NUMERIC / 100 as \"z坐标\",\n  (\n    ((data -> 'location' ->> 'x') :: NUMERIC + 375000) * 0.0000001015\n  ) as longitude,\n  (\n    ((data -> 'location' ->> 'y') :: NUMERIC + 375000) * -0.0000001172\n  ) as latitude\nFROM\n  cache\nwhere\n  metric in ('factory', 'extractor')\n  and (\n    (data -> 'location' ->> 'x') :: NUMERIC / 100 < $xmin\n    or (data -> 'location' ->> 'x') :: NUMERIC / 100 > $xmax\n    or (data -> 'location' ->> 'y') :: NUMERIC / 100 < $ymin\n    or (data -> 'location' ->> 'y') :: NUMERIC / 100 > $ymax\n  )\n  and url = '$server'\n  and session_name = '$session'",
+          "refId": "Other Buildings",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "GhzMNppVk"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "hide": false,
+          "rawQuery": true,
+          "rawSql": "(\n  select\n    id,\n    x,\n    y,\n    ((x * 100 + 375000) * 0.0000001015) as longitude,\n    ((y * 100 + 375000) * -0.0000001172) as latitude\n  from\n    (\n      values\n(1, $xmin, $ymin),\n        (2, $xmax, $ymin),\n        (3, $xmax, $ymax),\n        (4, $xmin, $ymax),\n        (5, $xmin, $ymin)\n    ) as coords (id, x, y)\n)\norder by\n  id",
+          "refId": "Selected Area",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "工厂地图",
+      "type": "geomap"
+    },
+    {
+      "datasource": {
+        "default": true,
+        "type": "grafana-postgresql-datasource",
+        "uid": "GhzMNppVk"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 14,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      },
+      "id": 13,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "11.6.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "GhzMNppVk"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\ndata ->> 'Recipe' as \"配方\",\ndata ->> 'Name' as \"建筑\",\ndata ->> 'ManuSpeed' as \"生产效率\",\ncount(*) as \"总数\"\nFROM cache\nwhere metric in ('factory', 'extractor')\nand (data -> 'location' ->> 'x')::NUMERIC/100 >= $xmin\nand (data -> 'location' ->> 'x')::NUMERIC/100 <= $xmax \nand (data -> 'location' ->> 'y')::NUMERIC/100 >= $ymin\nand (data -> 'location' ->> 'y')::NUMERIC/100 <= $ymax\nand url = '$server'\nand session_name = '$session'\ngroup by \"配方\", \"建筑\", \"生产效率\"",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "选中的建筑和配方",
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "refresh": "auto",
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": "http://host.docker.internal:8080",
+          "value": "http://host.docker.internal:8080"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "definition": "label_values(url)",
+        "includeAll": false,
+        "label": "服务器",
+        "name": "server",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(url)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "TvT",
+          "value": "TvT"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
+        "definition": "label_values({url=\"$server\"},session_name)",
+        "includeAll": false,
+        "label": "会话",
+        "name": "session",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values({url=\"$server\"},session_name)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "-3750",
+          "value": "-3750"
+        },
+        "description": "工厂的最左边界",
+        "label": "x 最小值",
+        "name": "xmin",
+        "options": [
+          {
+            "selected": true,
+            "text": "-3750",
+            "value": "-3750"
+          }
+        ],
+        "query": "-3750",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "3750",
+          "value": "3750"
+        },
+        "description": "工厂的最右边界",
+        "label": "x 最大值",
+        "name": "xmax",
+        "options": [
+          {
+            "selected": true,
+            "text": "3750",
+            "value": "3750"
+          }
+        ],
+        "query": "3750",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "4910",
+          "value": "4910"
+        },
+        "description": "工厂的北部边界",
+        "label": "y 最大值",
+        "name": "ymax",
+        "options": [
+          {
+            "selected": true,
+            "text": "4910",
+            "value": "4910"
+          }
+        ],
+        "query": "4910",
+        "type": "textbox"
+      },
+      {
+        "current": {
+          "text": "-3750",
+          "value": "-3750"
+        },
+        "description": "工厂的南部边界",
+        "label": "y 最小值",
+        "name": "ymin",
+        "options": [
+          {
+            "selected": true,
+            "text": "-3750",
+            "value": "-3750"
+          }
+        ],
+        "query": "-3750",
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "范围内机器和产量统计",
+  "uid": "pUvf_pt4k",
+  "version": 2
+}
