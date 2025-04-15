@@ -53,6 +53,7 @@ services:
     restart: unless-stopped
     environment:
       - POSTGRES_PASSWORD=${PG_PASSWORD:-secretpassword}
+      - POSTGRES_INITDB_ARGS=--timezone='Asia/Shanghai'
     volumes:
       - postgresql:/var/lib/postgresql/data
     ports:
