@@ -51,7 +51,7 @@ func main() {
 		if err == nil {
 			break
 		}
-		log.Printf("connecting to database...")
+		log.Printf("连接数据库中...")
 		time.Sleep(2 * time.Second)
 	}
 	CheckError(err)
@@ -59,20 +59,20 @@ func main() {
 	var m *migrate.Migrator
 	migrateConn, err := pgx.Connect(context.Background(), psqlconn)
 	if err != nil {
-		log.Printf("Unable to establish connection: %v", err)
+		log.Printf("无法建立连接: %v", err)
 		return
 	}
 	m, err = migrate.NewMigrator(context.Background(), migrateConn, "schema_version")
 	if err != nil {
-		log.Printf("Unable to create migrator: %v", err)
+		log.Printf("无法创建迁移器: %v", err)
 		return
 	}
 	m.LoadMigrations(os.DirFS(migrationLocation))
 	m.OnStart = func(_ int32, name, direction, _ string) {
-		log.Printf("Migrating %s: %s", direction, name)
+		log.Printf("迁移 %s: %s", direction, name)
 	}
 	if err = m.Migrate(context.Background()); err != nil {
-		log.Printf("Unexpected failure migrating: %v", err)
+		log.Printf("意外故障迁移: %v", err)
 		return
 	}
 
@@ -92,8 +92,8 @@ func main() {
 	}
 
 	log.Printf(`
-FRM Cache started
-Press ctrl-c to exit`)
+FRM缓存启动
+按 ctrl-c 退出`)
 
 	// Wait for an interrupt signal
 	sigChan := make(chan os.Signal, 1)

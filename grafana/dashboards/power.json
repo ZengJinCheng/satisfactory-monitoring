@@ -45,7 +45,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1,
+  "id": 2,
   "links": [],
   "panels": [
     {
@@ -68,7 +68,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
         "y": 1
       },
@@ -1188,7 +1188,7 @@
           "type": "math"
         }
       ],
-      "title": "电力差分图",
+      "title": "电力拆分图",
       "type": "piechart"
     },
     {
@@ -1437,7 +1437,7 @@
       },
       "id": 33,
       "panels": [],
-      "title": "电网 $circuit 电力分解图",
+      "title": "电网 $circuit 电力拆分图",
       "type": "row"
     },
     {
@@ -1990,15 +1990,15 @@
     }
   ],
   "preload": false,
-  "refresh": "auto",
+  "refresh": "10s",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "text": "",
-          "value": ""
+          "text": "http://host.docker.internal:8080",
+          "value": "http://host.docker.internal:8080"
         },
         "datasource": {
           "type": "prometheus",
@@ -2043,8 +2043,8 @@
       },
       {
         "current": {
-          "text": "",
-          "value": ""
+          "text": "0",
+          "value": "0"
         },
         "datasource": {
           "type": "prometheus",
@@ -2068,12 +2068,12 @@
     ]
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "电力",
   "uid": "OFv4PopVz",
-  "version": 1
+  "version": 4
 }

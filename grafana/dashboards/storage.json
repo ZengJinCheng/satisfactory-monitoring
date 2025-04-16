@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
+  "id": 10,
   "links": [],
   "panels": [
     {
@@ -33,164 +33,18 @@
         "type": "grafana-postgresql-datasource",
         "uid": "GhzMNppVk"
       },
-      "description": "存储容器地图",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 29,
-        "w": 11,
-        "x": 0,
-        "y": 0
-      },
-      "id": 4,
-      "options": {
-        "basemap": {
-          "config": {
-            "url": "https://satisfactory-map.featheredtoast.com/map/{z}/{x}/{y}.png"
-          },
-          "name": "Layer 0",
-          "type": "xyz"
-        },
-        "controls": {
-          "mouseWheelZoom": true,
-          "showAttribution": false,
-          "showDebug": false,
-          "showMeasure": false,
-          "showScale": false,
-          "showZoom": true
-        },
-        "layers": [
-          {
-            "config": {
-              "showLegend": false,
-              "style": {
-                "color": {
-                  "fixed": "dark-red"
-                },
-                "opacity": 0.8,
-                "rotation": {
-                  "fixed": 0,
-                  "max": 360,
-                  "min": -360,
-                  "mode": "mod"
-                },
-                "size": {
-                  "fixed": 8,
-                  "max": 15,
-                  "min": 2
-                },
-                "symbol": {
-                  "fixed": "img/icons/satisfactory/location-point.svg",
-                  "mode": "fixed"
-                },
-                "textConfig": {
-                  "fontSize": 12,
-                  "offsetX": 0,
-                  "offsetY": 0,
-                  "textAlign": "center",
-                  "textBaseline": "middle"
-                }
-              }
-            },
-            "location": {
-              "mode": "auto"
-            },
-            "name": "Layer 1",
-            "tooltip": true,
-            "type": "markers"
-          }
-        ],
-        "tooltip": {
-          "mode": "details"
-        },
-        "view": {
-          "allLayers": true,
-          "id": "coords",
-          "lastOnly": false,
-          "lat": -0.045,
-          "layer": "Layer 1",
-          "lon": 0.044525,
-          "padding": 3,
-          "shared": false,
-          "zoom": 13.87
-        }
-      },
-      "pluginVersion": "11.6.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "GhzMNppVk"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "select t.name,\nt.inventory,\nt.x,\nt.y,\nt.z,\nt.longitude,\nt.latitude\nfrom (\nselect \ndata ->> 'Name' as name,\ndata -> 'Inventory' as inventory,\nitem ->> 'Name' as item,\n(data -> 'location' ->> 'x')::NUMERIC/100 as x,\n(data -> 'location' ->> 'y')::NUMERIC/100 as y,\n(data -> 'location' ->> 'z')::NUMERIC/100 as z,\n(((data -> 'location' ->> 'x')::NUMERIC + 375000) * 0.0000001015) as longitude,\n(((data -> 'location' ->> 'y')::NUMERIC + 375000) * -0.0000001172) as latitude\nfrom cache\ncross join jsonb_path_query(data, '$.Inventory[*]') as item where metric = 'storageInv'\nand item->>'Name' = some(array[$item]::text[])\nand url = '$server'\nand session_name = '$session'\n) as t\ngroup by \nt.name,\nt.inventory,\nt.x,\nt.y,\nt.z,\nt.longitude,\nt.latitude\n;",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "地图",
-      "type": "geomap"
-    },
-    {
-      "datasource": {
-        "default": true,
-        "type": "grafana-postgresql-datasource",
-        "uid": "GhzMNppVk"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
+            "fixedColor": "text",
+            "mode": "shades"
           },
           "custom": {
             "align": "center",
             "cellOptions": {
               "type": "auto"
             },
+            "filterable": true,
             "inspect": false
           },
           "mappings": [],
@@ -199,10 +53,6 @@
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -210,9 +60,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 29,
-        "w": 13,
-        "x": 11,
+        "h": 79,
+        "w": 24,
+        "x": 0,
         "y": 0
       },
       "id": 2,
@@ -238,7 +88,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH extractor AS (\n  SELECT\n    production ->> 'Name' AS NAME,\n    ROUND(\n      SUM(\n        CASE\n          WHEN production ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN\n            CASE\n              WHEN production ->> 'Name' = '水' THEN\n                (production ->> 'Amount') :: NUMERIC / 1000\n              ELSE\n                (production ->> 'Amount') :: NUMERIC\n            END\n          ELSE\n            0\n        END\n      ),\n      3\n    ) AS Amount\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS production\n  WHERE\n    metric = 'extractor'\n  GROUP BY\n    1\n),\nfactorypro AS (\n  SELECT\n    production ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN production ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (production ->> 'Amount') :: NUMERIC ELSE 0 END), 3) AS Amount\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS production\n  WHERE\n    metric = 'factory'\n    AND production ->> 'Name' != 'Unassigned'\n  GROUP BY\n    1\n),\nfactorycons AS (\n  SELECT\n    ingredients ->> 'Name' AS NAME,\n    ROUND(\n      SUM(\n        CASE\n          WHEN ingredients ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN\n            CASE\n              WHEN ingredients ->> 'Name' = '水' THEN\n                (ingredients ->> 'Amount') :: NUMERIC / 1000\n              ELSE\n                (ingredients ->> 'Amount') :: NUMERIC\n            END\n          ELSE\n            0\n        END\n      ),\n      3\n    ) AS Amount\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'ingredients') AS ingredients\n  WHERE\n    metric = 'factory'\n    AND ingredients ->> 'Name' != 'Unassigned'\n  GROUP BY\n    1\n),\nworldInv AS (\n  SELECT DATA\n    ->> 'Name' AS NAME,\n    CASE\n      WHEN DATA ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN\n        (DATA ->> 'Amount') :: NUMERIC\n      ELSE\n        0\n    END AS Amount\n  FROM\n    CACHE\n  WHERE\n    metric = 'worldInv'\n) SELECT COALESCE\n  (P.NAME, C.NAME, e.NAME, w.NAME) AS \"物品\",\n  COALESCE (P.Amount, 0) + COALESCE (C.Amount, 0) + COALESCE (e.Amount, 0) + COALESCE (w.Amount, 0) AS \"数量\"\nFROM\n  factorypro\n  P FULL OUTER JOIN factorycons C USING (NAME)\n  FULL OUTER JOIN extractor e USING (NAME)\n  FULL OUTER JOIN worldInv w USING (NAME)\nORDER BY\n  \"数量\" ASC",
+          "rawSql": "WITH extractor AS (\n  SELECT\n    production ->> 'Name' AS NAME,\n    ROUND(\n      SUM(\n        CASE\n          WHEN production ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN\n            CASE\n              WHEN production ->> 'Name' IN ('水', '火箭燃料', '电离燃油', '燃料', '液态生物燃料', '涡轮燃油') THEN\n                (production ->> 'Amount') :: NUMERIC / 1000\n              ELSE\n                (production ->> 'Amount') :: NUMERIC\n            END\n          ELSE\n            0\n        END\n      ),\n      0\n    ) AS Amount\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS production\n  WHERE\n    metric = 'extractor'\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n),\nfactorypro AS (\n  SELECT\n    production ->> 'Name' AS NAME,\n    ROUND(\n      SUM(\n        CASE\n          WHEN production ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN\n            CASE\n              WHEN production ->> 'Name' IN ('水', '火箭燃料', '电离燃油', '燃料', '液态生物燃料', '涡轮燃油') THEN\n                (production ->> 'Amount') :: NUMERIC / 1000\n              ELSE\n                (production ->> 'Amount') :: NUMERIC\n            END\n          ELSE\n            0\n        END\n      ),\n      0\n    ) AS Amount\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS production\n  WHERE\n    metric = 'factory'\n    AND production ->> 'Name' != 'Unassigned'\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n),\nfactorycons AS (\n  SELECT\n    ingredients ->> 'Name' AS NAME,\n    ROUND(\n      SUM(\n        CASE\n          WHEN ingredients ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN\n            CASE\n              WHEN ingredients ->> 'Name' IN ('水', '火箭燃料', '电离燃油', '燃料', '液态生物燃料', '涡轮燃油') THEN\n                (ingredients ->> 'Amount') :: NUMERIC / 1000\n              ELSE\n                (ingredients ->> 'Amount') :: NUMERIC\n            END\n          ELSE\n            0\n        END\n      ),\n      0\n    ) AS Amount\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'ingredients') AS ingredients\n  WHERE\n    metric = 'factory'\n    AND ingredients ->> 'Name' != 'Unassigned'\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n),\nworldInv AS (\n  SELECT DATA\n    ->> 'Name' AS NAME,\n    CASE\n      WHEN DATA ->> 'Amount' ~ '^\\-?\\d+(\\.\\d+)?$' THEN\n        (DATA ->> 'Amount') :: NUMERIC\n      ELSE\n        0\n    END AS Amount\n  FROM\n    CACHE\n  WHERE\n    metric = 'worldInv'\n    AND url = '$server'\n    AND session_name = '$session'\n),\nplayInv AS (\n  SELECT\n    inv.item ->> 'Name' AS NAME,\n    (inv.item ->> 'Amount') :: NUMERIC AS Amount -- 转换为数值类型\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'Inventory') AS inv (item) -- 正确展开 JSON 数组\n  WHERE\n    metric = 'player'\n    AND url = '$server'\n    AND session_name = '$session'\n),\nCurrentPotential AS (\n  SELECT\n    fi.item ->> 'Name' AS NAME,\n    SUM(\n      ROUND(\n        CASE\n          WHEN fi.item ->> 'Name' IN ('水', '火箭燃料', '电离燃油', '燃料', '液态生物燃料', '涡轮燃油') THEN\n            (fi.item ->> 'Amount') :: NUMERIC / 1000\n          ELSE\n            (fi.item ->> 'Amount') :: NUMERIC\n        END, -- 保持 NUMERIC 类型\n        0\n      )\n    ) AS Amount\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'FuelInventory') AS fi (item)\n  WHERE\n    metric = 'generators'\n    AND fi.item ->> 'Name' IS NOT NULL\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n),\ncloInv AS (\n  SELECT DATA\n    ->> 'Name' AS NAME,\n    (DATA ->> 'Amount') :: NUMERIC AS Amount -- 转换为数值类型\n  FROM\n    CACHE\n  WHERE\n    metric = 'cloudInv'\n    AND url = '$server'\n    AND session_name = '$session'\n) SELECT COALESCE\n  (\n    P.NAME,\n    C.NAME,\n    e.NAME,\n    w.NAME,\n    A.NAME,\n    o.NAME,\n    l.NAME\n  ) AS \"物品\",\n  COALESCE (P.Amount, 0) + COALESCE (C.Amount, 0) + COALESCE (e.Amount, 0) + COALESCE (w.Amount, 0) + COALESCE (A.Amount, 0) + COALESCE (o.Amount, 0) + COALESCE (l.Amount, 0) AS \"数量\"\nFROM\n  factorypro\n  P FULL OUTER JOIN factorycons C USING (NAME)\n  FULL OUTER JOIN extractor e USING (NAME)\n  FULL OUTER JOIN worldInv w USING (NAME)\n  FULL OUTER JOIN playInv A USING (NAME)\n  FULL OUTER JOIN CurrentPotential o USING (NAME)\n  FULL OUTER JOIN cloInv l USING (NAME)\nWHERE\n  COALESCE (\n    P.NAME,\n    C.NAME,\n    e.NAME,\n    w.NAME,\n    A.NAME,\n    o.NAME,\n    l.NAME\n  ) = SOME (ARRAY [$item]:: TEXT [])\nORDER BY\n  \"数量\" ASC",
           "refId": "A",
           "sql": {
             "columns": [
@@ -259,20 +109,20 @@
           }
         }
       ],
-      "title": "库存",
+      "title": "总库存",
       "type": "table"
     }
   ],
   "preload": false,
-  "refresh": "auto",
+  "refresh": "10s",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "text": "",
-          "value": ""
+          "text": "http://host.docker.internal:8080",
+          "value": "http://host.docker.internal:8080"
         },
         "datasource": {
           "type": "prometheus",
@@ -317,8 +167,12 @@
       },
       {
         "current": {
-          "text": "All",
-          "value": "$__all"
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": {
           "type": "postgres",
@@ -344,7 +198,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "库存",
+  "title": "总库存",
   "uid": "rMkN1op4z",
-  "version": 1
+  "version": 9
 }

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"regexp"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/benbjohnson/clock"
 )
@@ -151,7 +152,7 @@ func (c *CacheWorker) flushMetricHistory() error {
 	delete := `DELETE from cache_with_history c WHERE c.url = $1 and c.session_name = $2;`
 	_, err := c.db.Exec(delete, c.frmBaseUrl, c.sessionName)
 	if err != nil {
-		log.Println("flush metrics history db error: ", err)
+		log.Println("刷新指标历史数据库错误: ", err)
 	}
 	return err
 }
@@ -159,16 +160,16 @@ func (c *CacheWorker) flushMetricHistory() error {
 func (c *CacheWorker) pullMetrics(metric string, route string, keepHistory bool) error {
 	data, err := retrieveData(c.frmBaseUrl + route)
 	if err != nil {
-		return fmt.Errorf("error when parsing json: %s", err)
+		return fmt.Errorf("解析 JSON 时出错: %s", err)
 	}
 	c.cacheMetrics(metric, data)
 	if err != nil {
-		return fmt.Errorf("error when caching metrics %s", err)
+		return fmt.Errorf("缓存指标时发生错误 %s", err)
 	}
 	if keepHistory {
 		err = c.cacheMetricsWithHistory(metric, data)
 		if err != nil {
-			return fmt.Errorf("error when caching metrics history %s", err)
+			return fmt.Errorf("缓存指标历史时发生错误 %s", err)
 		}
 	}
 	return nil
@@ -176,7 +177,7 @@ func (c *CacheWorker) pullMetrics(metric string, route string, keepHistory bool)
 
 func (c *CacheWorker) pullMetricsLog(metric string, route string, keepHistory bool) error {
 	if err := c.pullMetrics(metric, route, keepHistory); err != nil {
-		log.Println("Error when pulling metrics ", metric, ": ", err)
+		log.Println("拉取指标时发生错误 ", metric, ": ", err)
 		return err
 	}
 	return nil
@@ -193,6 +194,7 @@ func (c *CacheWorker) pullLowCadenceMetrics() {
 	c.pullMetricsLog("explorationSink", "/getExplorationSink", true)
 	c.pullMetricsLog("prodStats", "/getProdStats", true)
 	c.pullMetricsLog("power", "/getPower", true)
+	c.pullMetricsLog("cloudInv", "/getCloudInv", true)
 }
 
 func (c *CacheWorker) pullRealtimeMetrics() {
@@ -208,18 +210,23 @@ func (c *CacheWorker) pullSessionName() {
 	sessionInfo := SessionInfo{}
 	err := retrieveSessionInfo(c.frmBaseUrl+"/getSessionInfo", &sessionInfo)
 	if err != nil {
-		log.Printf("error reading session name from FRM: %s\n", err)
+		log.Printf("从FRM读取会话名时出错: %s\n", err)
 	}
 	newSessionName := sanitizeSessionName(sessionInfo.SessionName)
 	if newSessionName != "" && newSessionName != c.sessionName {
-		log.Println(c.frmBaseUrl + " has a new session name: " + newSessionName)
+		log.Println(c.frmBaseUrl + " 有新的会话名称: " + newSessionName)
 		c.sessionName = newSessionName
 		c.flushMetricHistory()
 	}
 }
 
 func (c *CacheWorker) Start() {
-	c.now = Clock.Now()
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil{
+		log.Println("loc 设置失败: %s",err)
+		return
+	}
+	c.now = Clock.Now().UTC().In(loc)
 	c.pullSessionName()
 	c.flushMetricHistory()
 	c.pullLowCadenceMetrics()
@@ -230,7 +237,7 @@ func (c *CacheWorker) Start() {
 		case <-c.ctx.Done():
 			return
 		case <-Clock.After(5 * time.Second):
-			c.now = Clock.Now()
+			c.now = Clock.Now().UTC().In(loc)
 			counter = counter + 1
 			c.pullSessionName()
 			c.pullRealtimeMetrics()

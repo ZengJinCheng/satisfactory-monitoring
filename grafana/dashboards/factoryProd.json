@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 9,
+  "id": 1,
   "links": [],
   "panels": [
     {
@@ -37,25 +37,68 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "fixedColor": "text",
+            "mode": "fixed"
           },
           "custom": {
             "align": "center",
             "cellOptions": {
-              "type": "auto"
+              "type": "color-text"
             },
+            "filterable": true,
             "inspect": false
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "from": -9999999,
+                "result": {
+                  "color": "red",
+                  "index": 0
+                },
+                "to": 0
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "orange",
+                  "index": 1
+                },
+                "to": 5
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 5,
+                "result": {
+                  "color": "yellow",
+                  "index": 2
+                },
+                "to": 20
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 20,
+                "result": {
+                  "color": "green",
+                  "index": 3
+                },
+                "to": 9999999
+              },
+              "type": "range"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -63,7 +106,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 51,
+        "h": 22,
         "w": 12,
         "x": 0,
         "y": 0
@@ -73,6 +116,7 @@
         "cellHeight": "sm",
         "footer": {
           "countRows": false,
+          "enablePagination": true,
           "fields": "",
           "reducer": [
             "sum"
@@ -93,7 +137,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH consumption AS (\n  SELECT\n    ingredient ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN ingredient ->> 'CurrentConsumed' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (ingredient ->> 'CurrentConsumed') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'ingredients') AS ingredient\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND ingredient ->> 'Name' IS NOT NULL\n    AND ingredient ->> 'Name' != 'Unassigned'\n    AND (DATA -> 'location' ->> 'x') :: NUMERIC BETWEEN ($xmin * 100)\n    AND ($xmax * 100)\n    AND (DATA -> 'location' ->> 'y') :: NUMERIC BETWEEN ($ymin * 100)\n    AND ($ymax * 100)\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n),\nproduction AS (\n  SELECT\n    ingredient ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN ingredient ->> 'CurrentProd' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (ingredient ->> 'CurrentProd') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS ingredient\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND ingredient ->> 'Name' IS NOT NULL\n    AND ingredient ->> 'Name' != 'Unassigned'\n    AND (DATA -> 'location' ->> 'x') :: NUMERIC BETWEEN ($xmin * 100)\n    AND ($xmax * 100)\n    AND (DATA -> 'location' ->> 'y') :: NUMERIC BETWEEN ($ymin * 100)\n    AND ($ymax * 100)\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n) SELECT COALESCE\n  (P.NAME, C.NAME) AS \"物品\",\n  ROUND(COALESCE (P.rate, 0) - COALESCE (C.rate, 0), 3) AS \"数量\"\nFROM\n  production\n  P FULL OUTER JOIN consumption C USING (NAME)\nORDER BY\n  \"数量\" ASC,\n  \"物品\"",
+          "rawSql": "WITH\n  CombinedData AS (\n      SELECT metric, DATA\n      FROM CACHE\n      WHERE metric IN ('generators', 'factory', 'extractor')\n      AND (DATA -> 'location' ->> 'x') :: NUMERIC BETWEEN ($xmin * 100)\n      AND ($xmax * 100)\n      AND (DATA -> 'location' ->> 'y') :: NUMERIC BETWEEN ($ymin * 100)\n      AND ($ymax * 100)\n      AND url = '$server'\n      AND session_name = '$session'\n  ),\nconsumption AS (\n  SELECT\n    fi.item ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN fi.item ->> 'CurrentConsumed' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (fi.item ->> 'CurrentConsumed') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CombinedData\n    CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'ingredients') AS fi (item)\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND fi.item ->> 'Name' IS NOT NULL\n    AND fi.item ->> 'Name' != 'Unassigned'\n  GROUP BY\n    1\n),\nproduction AS (\n  SELECT\n    fi.item ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN fi.item ->> 'CurrentProd' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (fi.item ->> 'CurrentProd') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CombinedData\n    CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS fi (item)\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND fi.item ->> 'Name' IS NOT NULL\n    AND fi.item ->> 'Name' != 'Unassigned'\n  GROUP BY\n    1\n),\n  CurrentPotential AS (\n    SELECT\n      fi.item ->> 'Name' AS NAME,\n      ROUND((CombinedData.DATA ->> 'CurrentPotential') :: NUMERIC / 100.0, -- 保持 NUMERIC 类型\n        1) AS current_potential\n    FROM\n      CombinedData\n      CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'FuelInventory') AS fi (item)\n    WHERE\n      metric = 'generators'\n      AND fi.item ->> 'Name' IS NOT NULL\n  ),\n itemcost AS (\n    SELECT item_name AS NAME, COST :: NUMERIC -- 显式转换为 NUMERIC\n    FROM item_data\n   ),\n fadianji AS(\n   SELECT COALESCE\n      (p.NAME, i.NAME) AS NAME,\n      ROUND(\n        CASE\n          WHEN SUM(COALESCE (p.current_potential, 0) * COALESCE (i.COST, 0)) IS NOT NULL THEN\n            CAST (\n              SUM(COALESCE (p.current_potential, 0) * COALESCE (i.COST, 0)) AS NUMERIC -- 显式转换为 NUMERIC\n            )\n          ELSE\n            0\n        END,\n        1\n      ) AS dangqianxiaohao\n  FROM CurrentPotential p LEFT JOIN itemcost i USING (NAME)\n  WHERE p.NAME = i.NAME\n  GROUP BY\n    1\n)\nSELECT COALESCE\n  (P.NAME, C.NAME,f.NAME) AS \"物品\",\n  ROUND(COALESCE (P.rate, 0),1) AS \"当前生产量\",\n  ROUND(COALESCE (f.dangqianxiaohao, 0) + COALESCE (C.rate, 0), 1) AS \"当前消耗量\",\n  ROUND(COALESCE (P.rate, 0),1) - ROUND(COALESCE (f.dangqianxiaohao, 0) + COALESCE (C.rate, 0), 1) AS \"当前盈余\"\nFROM\n  production P\n  FULL OUTER JOIN consumption C USING (NAME)\n  FULL OUTER JOIN fadianji f USING (NAME)\nORDER BY\n  \"当前盈余\" ASC,\n  \"当前消耗量\"",
           "refId": "A",
           "sql": {
             "columns": [
@@ -133,25 +177,68 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "fixedColor": "text",
+            "mode": "fixed"
           },
           "custom": {
             "align": "center",
             "cellOptions": {
-              "type": "auto"
+              "type": "color-text"
             },
+            "filterable": true,
             "inspect": false
           },
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "from": -999999,
+                "result": {
+                  "color": "red",
+                  "index": 0
+                },
+                "to": 0
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "orange",
+                  "index": 1
+                },
+                "to": 5
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 5,
+                "result": {
+                  "color": "yellow",
+                  "index": 2
+                },
+                "to": 20
+              },
+              "type": "range"
+            },
+            {
+              "options": {
+                "from": 20,
+                "result": {
+                  "color": "green",
+                  "index": 3
+                },
+                "to": 999999
+              },
+              "type": "range"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -159,7 +246,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 51,
+        "h": 22,
         "w": 12,
         "x": 12,
         "y": 0
@@ -169,6 +256,7 @@
         "cellHeight": "sm",
         "footer": {
           "countRows": false,
+          "enablePagination": true,
           "fields": "",
           "reducer": [
             "sum"
@@ -188,7 +276,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH consumption AS (\n  SELECT\n    ingredient ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN ingredient ->> 'MaxConsumed' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (ingredient ->> 'MaxConsumed') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'ingredients') AS ingredient\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND ingredient ->> 'Name' IS NOT NULL\n    AND ingredient ->> 'Name' != 'Unassigned'\n    AND (DATA -> 'location' ->> 'x') :: NUMERIC BETWEEN ($xmin * 100)\n    AND ($xmax * 100)\n    AND (DATA -> 'location' ->> 'y') :: NUMERIC BETWEEN ($ymin * 100)\n    AND ($ymax * 100)\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n),\nproduction AS (\n  SELECT\n    ingredient ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN ingredient ->> 'MaxProd' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (ingredient ->> 'MaxProd') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CACHE CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS ingredient\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND ingredient ->> 'Name' IS NOT NULL\n    AND ingredient ->> 'Name' != 'Unassigned'\n    AND (DATA -> 'location' ->> 'x') :: NUMERIC BETWEEN ($xmin * 100)\n    AND ($xmax * 100)\n    AND (DATA -> 'location' ->> 'y') :: NUMERIC BETWEEN ($ymin * 100)\n    AND ($ymax * 100)\n    AND url = '$server'\n    AND session_name = '$session'\n  GROUP BY\n    1\n) SELECT COALESCE\n  (P.NAME, C.NAME) AS \"物品\",\n  ROUND(COALESCE (P.rate, 0) - COALESCE (C.rate, 0), 3) AS \"数量\"\nFROM\n  production\n  P FULL OUTER JOIN consumption C USING (NAME)\nORDER BY\n  \"数量\" ASC,\n  \"物品\"",
+          "rawSql": "WITH\n  CombinedData AS (\n      SELECT metric, DATA\n      FROM CACHE\n      WHERE metric IN ('generators', 'factory', 'extractor')\n      AND (DATA -> 'location' ->> 'x') :: NUMERIC BETWEEN ($xmin * 100)\n      AND ($xmax * 100)\n      AND (DATA -> 'location' ->> 'y') :: NUMERIC BETWEEN ($ymin * 100)\n      AND ($ymax * 100)\n      AND url = '$server'\n      AND session_name = '$session'\n  ),\nconsumption AS (\n  SELECT\n    fi.item ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN fi.item ->> 'MaxConsumed' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (fi.item ->> 'MaxConsumed') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CombinedData\n    CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'ingredients') AS fi (item)\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND fi.item ->> 'Name' IS NOT NULL\n    AND fi.item ->> 'Name' != 'Unassigned'\n  GROUP BY\n    1\n),\nproduction AS (\n  SELECT\n    fi.item ->> 'Name' AS NAME,\n    ROUND(SUM(CASE WHEN fi.item ->> 'MaxProd' ~ '^\\-?\\d+(\\.\\d+)?$' THEN (fi.item ->> 'MaxProd') :: NUMERIC ELSE 0 END), 3) AS rate\n  FROM\n    CombinedData\n    CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'production') AS fi (item)\n  WHERE\n    metric IN ('factory', 'extractor')\n    AND fi.item ->> 'Name' IS NOT NULL\n    AND fi.item ->> 'Name' != 'Unassigned'\n  GROUP BY\n    1\n),\n  CurrentPotential AS (\n    SELECT\n      fi.item ->> 'Name' AS NAME,\n      ROUND((CombinedData.DATA ->> 'CurrentPotential') :: NUMERIC / 100.0, -- 保持 NUMERIC 类型\n        1) AS current_potential\n    FROM\n      CombinedData\n      CROSS JOIN LATERAL jsonb_array_elements (DATA -> 'FuelInventory') AS fi (item)\n    WHERE\n      metric = 'generators'\n      AND fi.item ->> 'Name' IS NOT NULL\n  ),\n itemcost AS (\n    SELECT item_name AS NAME, COST :: NUMERIC -- 显式转换为 NUMERIC\n    FROM item_data\n   ),\n fadianji AS(\n   SELECT COALESCE\n      (p.NAME, i.NAME) AS NAME,\n      ROUND(\n        CASE\n          WHEN SUM(2.5 * COALESCE (i.COST, 0)) IS NOT NULL THEN\n            CAST (\n              SUM(2.5 * COALESCE (i.COST, 0)) AS NUMERIC -- 显式转换为 NUMERIC\n            )\n          ELSE\n            0\n        END,\n        1\n      ) AS zuidaxiaohao\n  FROM CurrentPotential p LEFT JOIN itemcost i USING (NAME)\n  WHERE p.NAME = i.NAME\n  GROUP BY\n    1\n)\nSELECT COALESCE\n  (P.NAME, C.NAME,f.NAME) AS \"物品\",\n  ROUND(COALESCE (P.rate, 0),1) AS \"理论最大生产量\",\n  ROUND(COALESCE (f.zuidaxiaohao, 0) + COALESCE (C.rate, 0), 1) AS \"理论最大消耗量\",\n  ROUND(COALESCE (P.rate, 0),1) - ROUND(COALESCE (f.zuidaxiaohao, 0) + COALESCE (C.rate, 0), 1) AS \"理论最大盈余\"\nFROM\n  production P\n  FULL OUTER JOIN consumption C USING (NAME)\n  FULL OUTER JOIN fadianji f USING (NAME)\nORDER BY\n  \"理论最大盈余\" ASC,\n  \"理论最大消耗量\"",
           "refId": "A",
           "sql": {
             "columns": [
@@ -224,7 +312,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 22
       },
       "id": 9,
       "panels": [],
@@ -240,7 +328,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 52
+        "y": 23
       },
       "id": 11,
       "options": {
@@ -262,7 +350,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 30
       },
       "id": 7,
       "panels": [],
@@ -308,7 +396,7 @@
         "h": 14,
         "w": 12,
         "x": 0,
-        "y": 60
+        "y": 31
       },
       "id": 5,
       "options": {
@@ -630,6 +718,7 @@
             "cellOptions": {
               "type": "auto"
             },
+            "filterable": true,
             "inspect": false
           },
           "mappings": [],
@@ -652,13 +741,14 @@
         "h": 14,
         "w": 12,
         "x": 12,
-        "y": 60
+        "y": 31
       },
       "id": 13,
       "options": {
         "cellHeight": "sm",
         "footer": {
           "countRows": false,
+          "enablePagination": true,
           "fields": "",
           "reducer": [
             "sum"
@@ -703,15 +793,15 @@
     }
   ],
   "preload": false,
-  "refresh": "auto",
+  "refresh": "10s",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "text": "",
-          "value": ""
+          "text": "http://host.docker.internal:8080",
+          "value": "http://host.docker.internal:8080"
         },
         "datasource": {
           "type": "prometheus",
@@ -836,5 +926,5 @@
   "timezone": "",
   "title": "范围内机器和产量统计",
   "uid": "pUvf_pt4k",
-  "version": 1
+  "version": 9
 }
